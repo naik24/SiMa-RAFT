@@ -16,10 +16,13 @@ class RAFTStereoExtractorEncoder(nn.Module):
         self.fnet = BasicEncoder(output_dim = 256, norm_fn = 'instance', downsample = args.n_downsample)
         self.update_block = BasicMultiUpdateBlock(self.args, hidden_dims=args.hidden_dims)
 
-    def forward(self, image1, image2, flow_init = None, test_mode = False):
+    #def forward(self, image1, image2, flow_init = None, test_mode = False):
+    def forward(self, image_set):
 
-        image_set = torch.cat([image1, image2], dim = 1)
-        image1, image2 = torch.split(image_set, split_size_or_sections = 3, dim = 1)
+        image1, image2 = torch.split(image_set, split_size_or_sections = image_set.shape[2] // 2, dim = 2)
+
+        image_set_2 = torch.cat([image1, image2], dim = 2)
+        image1, image2 = torch.split(image_set_2, split_size_or_sections = image_set_2.shape[2] // 2, dim = 2)
 
         cnet_list = self.cnet(image1, num_layers = self.args.n_gru_layers)
         fmap1, fmap2 = self.fnet([image1, image2])

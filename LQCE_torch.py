@@ -48,23 +48,21 @@ def load(args):
     image2 = (2 * (image2 / 255.0) - 1.0).contiguous()
 
     image1, image2 = image1.numpy(), image2.numpy()
+    image_set = np.concatenate([image1, image2], axis = 2)
 
     # ===================== loading feature extractor and encoder =====================
     fee_path = args.fee_path
 
     fee_inputs = {
-        'left_image': image1,
-        'right_image': image2
+        'input_pair': image_set,
     }
 
     fee_input_shapes = {
-        'left_image': image1.shape,
-        'right_image': image2.shape
+        'input_pair': image_set.shape,
     }
 
     fee_input_types = {
-        'left_image': ScalarType.float32,
-        'right_image': ScalarType.float32
+        'input_pair': ScalarType.float32,
     }
 
     fee_importer_params: ImporterParams = onnx_source(
@@ -77,8 +75,9 @@ def load(args):
 
     # ===================== inference on feature extractor and encoder =====================
 
-    fee_inputs['left_image'] = np.transpose(fee_inputs['left_image'], (0, 2, 3, 1))
-    fee_inputs['right_image'] = np.transpose(fee_inputs['right_image'], (0, 2, 3, 1))
+    #fee_inputs['left_image'] = np.transpose(fee_inputs['left_image'], (0, 2, 3, 1))
+    #fee_inputs['right_image'] = np.transpose(fee_inputs['right_image'], (0, 2, 3, 1))
+    fee_inputs['input_pair'] = np.transpose(fee_inputs['input_pair'], (0, 2, 3, 1))
 
     net_list_0, net_list_1, net_list_2, inp_list_0, inp_list_1, inp_list_2, fmap1, fmap2 = loaded_fee.execute(fee_inputs, log_level = logging.DEBUG)
 
@@ -161,7 +160,7 @@ def compile_model(args, quantized_model):
 
     quantized_model.compile(
         output_path = args.output_directory,
-        log_level = logging.INFO,
+        log_level = logging.DEBUG,
     )
 
 def execute_tvm_fp32(loaded_net, inputs: dict):
@@ -184,11 +183,12 @@ def quantized_execution(args, fee_quantized, refiner_quantized, fast_mode = Fals
     image2 = (2 * (image2 / 255.0) - 1.0).contiguous()
 
     image1, image2 = image1.numpy(), image2.numpy()
-    image1, image2 = np.transpose(image1, (0, 2, 3, 1)), np.transpose(image2, (0, 2, 3, 1))
+    #image1, image2 = np.transpose(image1, (0, 2, 3, 1)), np.transpose(image2, (0, 2, 3, 1))
+    image_set = np.concatenate([image1, image2], axis = 2)
+    image_set = np.transpose(image_set, (0, 2, 3, 1))
 
     fee_inputs = {
-        'left_image': image1,
-        'right_image': image2
+        'input_pair': image_set
     }
 
     # executing quantized feature extractor encoder
@@ -260,7 +260,7 @@ def main(args):
     refiner_quantized = quantize_model(refiner_loaded, refiner_inputs, model_name = 'refiner')
     logger.success("<<<< models quantized successfully >>>>\n")
 
-    # compile the quantized models
+    #compile the quantized models
     if args.compile:
         logger.info("<<<< compiling models. this may take a while >>>>")
         compile_model(args, fee_quantized)

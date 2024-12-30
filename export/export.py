@@ -38,10 +38,11 @@ def export_onnx(
     dummy_input_left = (2 * (dummy_input_left / 255.0) - 1.0).contiguous()
     dummy_input_right = (2 * (dummy_input_right / 255.0) - 1.0).contiguous()
 
+    image_set = torch.cat([dummy_input_left, dummy_input_right], dim = 2)
+
     # defining input and output names
     input_names = [
-        'left_image',
-        'right_image'
+        'input_pair',
     ]
 
     output_names = [
@@ -57,14 +58,13 @@ def export_onnx(
 
     # sample run through feature_extractor_encoder
     net_list_0, net_list_1, net_list_2, inp_list_0, inp_list_1, inp_list_2, fmap1, fmap2 = feature_extractor_encoder(
-                                                                                                image1 = dummy_input_left, 
-                                                                                                image2 = dummy_input_right
+                                                                                                image_set,
                                                                                             )
 
     # exporting to onnx
     torch.onnx.export(
         model = feature_extractor_encoder,  # model being run
-        args = (dummy_input_left, dummy_input_right),  # model input (or a tuple for multiple inputs)
+        args = (image_set),  # model input (or a tuple for multiple inputs)
         f = "checkpoints/rs_extractor_encoder.onnx",  # where to save the model (can be a file or file-like object)
         export_params=True,  # store the trained parameter weights inside the model file
         opset_version=17,  # the onnx version to export the model to

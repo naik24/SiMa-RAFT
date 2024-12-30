@@ -64,9 +64,10 @@ def demo(args):
 
             image1 = (2 * (image1 / 255.0) - 1.0).contiguous()
             image2 = (2 * (image2 / 255.0) - 1.0).contiguous()
-            image_set = torch.cat([image1, image2], dim = 1)
+            image_set = torch.cat([image1, image2], dim = 2)
 
-            net_list_0, net_list_1, net_list_2, inp_list_0, inp_list_1, inp_list_2, fmap1, fmap2 = model_featureExtractor(image1, image2, test_mode = True)
+            #net_list_0, net_list_1, net_list_2, inp_list_0, inp_list_1, inp_list_2, fmap1, fmap2 = model_featureExtractor(image1, image2, test_mode = True)
+            net_list_0, net_list_1, net_list_2, inp_list_0, inp_list_1, inp_list_2, fmap1, fmap2 = model_featureExtractor(image_set)
 
             # initialize correlation function and flow predictions
             corr_block = PytorchAlternateCorrBlock1D
